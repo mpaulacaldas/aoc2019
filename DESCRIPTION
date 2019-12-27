@@ -1,0 +1,12 @@
+Package: aoc2019
+Title: Advent of Code 2019
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Maria Paula",
+           family = "Caldas",
+           role = c("aut", "cre"),
+           email = "mpaulacaldas@gmail.com")
+Description: My attempt at the Advent of Code 2019.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
