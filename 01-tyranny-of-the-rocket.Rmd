@@ -1,0 +1,76 @@
+# The Tyranny of the Rocket Equation
+
+[Instructions](https://adventofcode.com/2019/day/1)
+
+```{r, message=FALSE}
+library(tidyverse)
+library(reticulate)
+
+day1 <- read_lines("data-raw/day01.txt") %>% 
+  parse_number()
+```
+
+## Part 1
+
+Base:
+
+```{r}
+sum(floor(day1 / 3) - 2)
+```
+
+Base + pipes:
+
+```{r}
+day1 %>% 
+  { . / 3 } %>% # one way to pipe with an arithmetic function
+  floor() %>% 
+  `-`(2) %>% # another way
+  sum()
+```
+
+Tidyverse:
+
+```{r}
+df1 <- tibble(
+  mass = day1,
+  third = mass / 3,
+  floor = floor(third),
+  minus_two = floor - 2
+  )
+
+df1
+
+df1 %>% 
+  summarise(fuel_req = sum(minus_two))
+```
+
+Python:
+
+```{python}
+import numpy as np
+
+day1 = np.array(r.day1)
+
+sum(np.floor(day1 / 3) - 2)
+```
+
+## Part 2
+
+Function + while:
+
+```{r}
+calculate_fuel <- function(mass) {
+  pmax(floor(mass / 3) - 2, 0)
+}
+
+module_mass <- day1
+total_mass <- 0
+
+while (any(module_mass > 0)) {
+  module_mass <- calculate_fuel(module_mass)
+  total_mass <- total_mass + sum(module_mass)
+}
+
+total_mass
+```
+

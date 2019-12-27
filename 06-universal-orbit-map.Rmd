@@ -1,0 +1,78 @@
+# Universal Orbit Map
+
+[Instructions](https://adventofcode.com/2019/day/6)
+
+```{r message=FALSE}
+library(tidyverse)
+
+day6 <- readLines("data-raw/day06.txt")
+
+df <- tibble(input = day6) %>% 
+  separate(input, into = c("inner", "outer"), sep = "\\)")
+```
+
+## Part 1
+
+```{r}
+root <- "COM"
+ends <- unique(setdiff(df$outer, df$inner))
+
+branches <- vector("list", length = length(ends))
+names(branches) <- ends
+
+for (e in ends) {
+  
+  branch <- df %>% filter(outer == e)
+  prior <- branch$inner
+  
+  while (prior != "COM") {
+    prior_df <- df %>% filter(outer == prior)
+    branch   <- bind_rows(prior_df, branch)
+    prior    <- prior_df$inner
+  }
+  
+  branches[[e]] <- branch
+  
+}
+
+network <- branches %>% 
+  map_dfr(mutate, step_branch = row_number(), .id = "branch_end")
+
+keep_longest <- function(.data) {
+  longest_branch <- .data %>% 
+    count(branch_end, sort = TRUE) %>% 
+    slice(1) %>%   # keeps only the first one if there's a tie
+    pull(branch_end)
+  
+  .data %>% 
+    filter(branch_end == longest_branch)
+}
+
+network_pruned <- keep_longest(network)
+others <- anti_join(network, network_pruned, by = c("inner", "outer"))
+
+while (nrow(others) > 0) {
+  longest <- keep_longest(others)
+  network_pruned <- bind_rows(network_pruned, longest)
+  others <- anti_join(others, longest, by = c("inner", "outer"))
+}
+
+sum(network_pruned$step_branch)
+```
+
+## Part 2
+
+```{r}
+network %>% 
+  filter(outer %in% c("SAN", "YOU"))
+
+santa_you <- network %>% 
+  filter(branch_end %in% c("SAN", "YOU")) %>% 
+  group_by(inner, outer) %>% 
+  mutate(common = (n() > 1)) %>% 
+  ungroup()
+
+santa_you %>% 
+  filter(!common, !outer %in% c("SAN", "YOU")) %>% 
+  nrow()
+```

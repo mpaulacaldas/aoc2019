@@ -1,0 +1,106 @@
+# Crossed Wires
+
+[Instructions](https://adventofcode.com/2019/day/3)
+
+
+```{r, message=FALSE}
+library(tidyverse)
+
+day3 <- readLines("data-raw/day03.txt")
+
+# day3 <- c("R8,U5,L5,D3", "U7,R6,D4,L4")
+# day3 <- c("R75,D30,R83,U83,L12,D49,R71,U7,L72", "U62,R66,U55,R34,D71,R55,D58,R83")
+```
+
+## Part 1
+
+```{r}
+df <- tibble(wire = 1:2, input = day3) %>% 
+  separate_rows(input, sep = ",") %>% 
+  extract(input, c("direction", "steps"), "(.)(.*)", convert = TRUE) %>% 
+  mutate(
+    steps   = if_else(direction %in% c("R", "U"), steps, -steps),
+    x_delta = (direction %in% c("R", "L")) * steps,
+    y_delta = (direction %in% c("U", "D")) * steps
+    ) %>% 
+  group_by(wire) %>% 
+  mutate(
+    x_end = cumsum(x_delta),
+    y_end = cumsum(y_delta),
+    x_start = lag(x_end, default = 0),
+    y_start = lag(y_end, default = 0)
+    ) %>% 
+  ungroup() %>% 
+  mutate(
+    x = map2(x_start, x_end, ~ .x:.y),
+    y = map2(y_start, y_end, ~ .x:.y)
+  )
+
+df_small <- df %>% 
+  select(wire, x, y)
+
+# Split in two for faster computation
+df_x <- df_small %>% 
+  filter(lengths(y) == 1) %>% 
+  unnest(y) %>% 
+  unnest(x) %>% 
+  distinct()
+
+df_y <- df_small %>% 
+  filter(lengths(x) == 1) %>% 
+  unnest(x) %>% 
+  unnest(y) %>% 
+  distinct()
+
+df_cross <- bind_rows(df_x, df_y) %>% 
+  distinct() %>% 
+  count(x, y) %>% 
+  filter(n > 1, !(x == 0 & y == 0)) %>% 
+  select(-n)
+
+df_cross %>% 
+  mutate(distance = abs(x) + abs(y)) %>% 
+  summarise(min(distance))
+```
+
+## Part 2
+
+```{r}
+df2 <- df %>% 
+  group_by(wire) %>% 
+  mutate(
+    cumsteps_end   = cumsum(abs(steps)),
+    cumsteps_start = lag(cumsteps_end, default = 0),
+    cumsteps = map2(cumsteps_start, cumsteps_end, ~ .x:.y)
+    ) %>% 
+  ungroup()
+
+df_small2 <- df2 %>% 
+  select(wire, x, y, cumsteps)
+
+df_x2 <- df_small2 %>% 
+  filter(lengths(y) == 1) %>% 
+  unnest(y) %>% 
+  unnest(c(x, cumsteps)) %>% 
+  distinct()
+
+df_y2 <- df_small2 %>% 
+  filter(lengths(x) == 1) %>% 
+  unnest(x) %>% 
+  unnest(c(y, cumsteps)) %>% 
+  distinct()
+
+bind_rows(df_x2, df_y2) %>% 
+  distinct() %>% 
+  filter(!(x == 0 & y == 0)) %>%
+  # keep steps value of first time the wire visits the position
+  group_by(wire, x, y) %>% 
+  filter(cumsteps == min(cumsteps)) %>%
+  # keep only the intersections
+  group_by(x, y) %>% 
+  filter(n() > 1) %>% 
+  summarise(distance = sum(cumsteps)) %>% 
+  ungroup() %>% 
+  summarise(min(distance))
+```
+

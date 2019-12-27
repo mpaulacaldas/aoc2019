@@ -1,0 +1,54 @@
+# Space Image Format
+
+[Instructions](https://adventofcode.com/2019/day/8)
+
+```{r, message=FALSE}
+library(tidyverse)
+
+day8 <- readLines("data-raw/day08.txt")
+```
+
+## Part 1
+
+*The image you received is 25 pixels wide and 6 pixels tall.*
+
+```{r}
+pix_per_image <- 25 * 6
+total_pix <- str_length(day8)
+
+start <- seq(1, total_pix, by = pix_per_image)
+end   <- seq(pix_per_image, total_pix, by = pix_per_image)
+
+layers <- map2_chr(start, end, ~ str_sub(day8, start = .x, end = .y))
+
+n_zeros <- str_count(layers, "0")
+n_ones <- str_count(layers, "1")
+n_twos <- str_count(layers, "2")
+
+n_ones[n_zeros == min(n_zeros)] * n_twos[n_zeros == min(n_zeros)]
+```
+
+## Part 2
+
+```{r}
+replace_twos <- function(x, y) {
+  x[x == "2"] <- y[x == "2"]
+  x
+}
+
+final_img_data <- layers %>% 
+  map(~ str_split(.x, "")[[1]]) %>% 
+  reduce(replace_twos) %>% 
+  paste0(collapse = "")
+
+final_img_data
+
+start2 <- seq(1, pix_per_image, by = 25)
+end2   <- seq(25, pix_per_image, by = 25)
+
+final_img_data %>% 
+  str_replace_all("0", " ") %>% 
+  str_sub(start2, end2) %>% 
+  paste0(collapse = "\n") %>% 
+  cat()
+```

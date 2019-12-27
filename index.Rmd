@@ -1,0 +1,25 @@
+--- 
+title: "Advent of Code 2019"
+author: "María Paula Caldas"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+description: "My attempt at the 2019 Advent of Code puzzles."
+---
+
+# Technical details {-}
+
+I used the following packages:
+
+```{r, message=FALSE}
+library(tidyverse)
+library(reticulate)
+library(gtools) # for permutations
+```
+
+My setup at the time:
+
+```{r, echo=FALSE}
+devtools::session_info()
+```
+

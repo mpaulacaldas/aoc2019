@@ -1,0 +1,114 @@
+# 1202 Program Alarm
+
+[Instructions](https://adventofcode.com/2019/day/2)
+
+```{r, message=FALSE}
+library(tidyverse)
+
+day2 <- read_lines("data-raw/day02.txt") %>% 
+  str_split(",", simplify = TRUE) %>% 
+  parse_number()
+```
+
+## Part 1
+
+```{r}
+# Restore the state of the program
+restored_state <- day2
+
+restored_state[2] <- 12
+restored_state[3] <- 2
+
+restored_state
+
+# Prepare to run the program
+running_state <- restored_state
+
+opcode_index <- 1
+opcode_value <- running_state[opcode_index]
+
+while (opcode_value != 99) {
+  
+  stopifnot(opcode_value %in% c(1, 2))
+  
+  # Get the positions of the inputs and outputs
+  input1_index <- running_state[opcode_index + 1]
+  input2_index <- running_state[opcode_index + 2]
+  output_index <- running_state[opcode_index + 3] 
+  
+  # Get the inputs
+  input1 <- running_state[input1_index + 1]
+  input2 <- running_state[input2_index + 1]
+  
+  # Calculate the output
+  output <- switch(opcode_value, "1" = input1 + input2, "2" = input1 * input2)
+  
+  # Put the output in the proper position
+  running_state[output_index + 1] <- output
+  
+  # Move on
+  opcode_index <- opcode_index + 4
+  opcode_value <- running_state[opcode_index]
+  
+}
+
+running_state
+
+# Answer
+running_state[1]
+```
+
+## Part 2
+
+```{r}
+calculate_output <- function(noun, verb) {
+  
+  # Restore the state of the program
+  restored_state <- day2
+  
+  restored_state[2] <- noun
+  restored_state[3] <- verb
+  
+  # Prepare to run the program
+  running_state <- restored_state
+  
+  opcode_index <- 1
+  opcode_value <- running_state[opcode_index]
+  
+  while (opcode_value != 99) {
+    
+    stopifnot(opcode_value %in% c(1, 2))
+    
+    # Get the positions of the inputs and outputs
+    input1_index <- running_state[opcode_index + 1]
+    input2_index <- running_state[opcode_index + 2]
+    output_index <- running_state[opcode_index + 3] 
+    
+    # Get the inputs
+    input1 <- running_state[input1_index + 1]
+    input2 <- running_state[input2_index + 1]
+    
+    # Calculate the output
+    output <- switch(opcode_value, "1" = input1 + input2, "2" = input1 * input2)
+    
+    # Put the output in the proper position
+    running_state[output_index + 1] <- output
+    
+    # Move on
+    opcode_index <- opcode_index + 4
+    opcode_value <- running_state[opcode_index]
+    
+  }
+  
+  running_state[1]
+}
+
+combinations <- list(noun = 1:100, verb = 1:100) %>% 
+  cross_df() %>%
+  mutate(output = pmap_dbl(., calculate_output))
+
+combinations %>% 
+  filter(output == 19690720) %>% 
+  transmute(answer = noun * 100 + verb)
+```
+

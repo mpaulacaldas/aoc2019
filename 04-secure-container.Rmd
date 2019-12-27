@@ -1,0 +1,110 @@
+# Secure Container
+
+[Instructions](https://adventofcode.com/2019/day/4)
+
+```{r, message=FALSE}
+library(tidyverse)
+
+day4 <- "372304-847060"
+```
+
+## Part 1
+
+```{r}
+has_adj_pair <- function(x) { str_detect(x, "(\\d)\\1") }
+
+is_monotonous <- function(x) {
+  
+  digits <- as.numeric(str_split(x, "")[[1]])
+  all(digits[-1] >= digits[-length(digits)])
+  
+}
+
+is_valid <- function(x) { has_adj_pair(x) && is_monotonous(x) }
+
+domain <- day4 %>% 
+  str_split("-", simplify = TRUE) %>% 
+  as.numeric() %>% 
+  {.[[1]]:.[[2]]} %>% 
+  as.character()
+
+domain %>% 
+  map_lgl(is_valid) %>% 
+  sum()
+```
+
+## Part 2
+
+I can't regex.
+
+```{r}
+old <- tibble(
+  domain = domain,
+  is_valid = map_lgl(domain, is_valid)
+  )
+
+
+has_adj_5_or_6 <- function(x) {
+  str_detect(x, "(\\d)\\1{4,5}")
+}
+
+# has_adj_5_or_6("111111")
+# has_adj_5_or_6("111119")
+# has_adj_5_or_6("121111")
+
+
+has_adj_3_and_3 <- function(x) {
+  str_detect(x, "(\\d)\\1{2}(\\d)\\2{2}")
+}
+
+# has_adj_3_and_3("222111")
+
+has_adj_34 <- function(x) {
+  str_detect(x, "(\\d)\\1{2,3}")
+}
+
+# has_adj_34("234111")
+
+has_adj_34_and_2 <- function(x) {
+  
+  invalid_followed_by_valid <- str_detect(x, "(\\d)\\1{2,3}(\\d)\\2")
+  valid_followed_by_invalid <- str_detect(x, "(\\d)\\1(\\d)\\2{2,3}")
+  
+  valid_34_2 <- invalid_followed_by_valid || valid_followed_by_invalid
+  
+  invalid_followed_by_dot_valid <- str_detect(x, "(\\d)\\1{2}.(\\d)\\2")
+  valid_followed_by_dot_invalid <- str_detect(x, "(\\d)\\1.(\\d)\\2{2}")
+  
+  valid_3_dot_2 <- invalid_followed_by_dot_valid || valid_followed_by_dot_invalid
+  
+  valid_34_2 || valid_3_dot_2
+}
+
+# has_adj_34_and_2("112222")
+# has_adj_34_and_2("222233")
+# has_adj_34_and_2("222231")
+# has_adj_34_and_2("222331")
+# has_adj_34_and_2("22233")
+# has_adj_34_and_2("222133")
+
+
+has_valid_adj_pair <- function(x) {
+  case_when(
+    has_adj_5_or_6(x)   ~ FALSE,
+    has_adj_3_and_3(x)  ~ FALSE,
+    has_adj_34_and_2(x) ~ TRUE,
+    has_adj_34(x)       ~ FALSE,
+    has_adj_pair(x)     ~ TRUE,
+    TRUE                ~ FALSE
+  )
+}
+
+# has_valid_adj_pair("111122")
+
+new <- old %>% 
+  filter(is_valid) %>% 
+  mutate(has_valid_adj_pair = map_lgl(domain, has_valid_adj_pair))
+
+sum(new$has_valid_adj_pair)
+```
+

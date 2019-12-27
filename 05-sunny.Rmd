@@ -1,0 +1,198 @@
+# Sunny with a chance of Asteroids
+
+[Instructions](https://adventofcode.com/2019/day/5)
+
+```{r}
+read_day5 <- function() {
+  raw <- readLines("data-raw/day05.txt")
+  vec <- strsplit(raw, ",")[[1]]
+  as.numeric(vec)
+}
+```
+
+## Part 1
+
+Note that I always need to add 1 to the output index because R counts positions from 1, not 0, like the puzzle states.
+
+```{r}
+running_state <- read_day5()
+
+input <- 1
+instr_index <- 1
+
+while (instr_index < length(running_state)) {
+  
+  # Instruction & parameters
+  
+  instr_orig <- running_state[instr_index]
+  instr_full <- stringr::str_pad(instr_orig, 5, "left", "0")
+  
+  instr_params <- stringr::str_split(instr_full, "")[[1]]
+  
+  optcode <- instr_params[5]
+  param1  <- instr_params[3]
+  param2  <- instr_params[2]
+  
+  
+  # Execute the program
+  
+  if (optcode %in% c("1", "2")) {
+    
+    input1_index <- switch(
+      param1, 
+      "0" = running_state[instr_index + 1] + 1, 
+      "1" = instr_index + 1
+    )
+    
+    input2_index <- switch(
+      param2,
+      "0" = running_state[instr_index + 2] + 1,
+      "1" = instr_index + 2
+    )
+    
+    input1 <- running_state[input1_index]
+    input2 <- running_state[input2_index]
+    
+    output <- switch(optcode, "1" = input1 + input2, "2" = input1 * input2)
+    
+    output_index <- running_state[instr_index + 3] + 1
+    running_state[output_index] <- output
+    
+    instr_jump <- 4
+  }
+  
+  if (optcode == "3") {
+    
+    output_index <- running_state[instr_index + 1] + 1
+    running_state[output_index] <- input
+    
+    instr_jump <- 2
+    
+  }
+  
+  if (optcode == "4") {
+    
+    output_index <- running_state[instr_index + 1] + 1
+    
+    message("Received input:", running_state[output_index])
+    
+    instr_jump <- 2
+    
+  }
+  
+  if (optcode == "9") break
+  
+  instr_index <- instr_index + instr_jump
+  
+}
+```
+
+## Part 2
+
+```{r}
+running_state <- read_day5()
+
+input <- 5
+instr_index <- 1
+
+while (instr_index < length(running_state)) {
+  
+  # Instruction & parameters
+  
+  instr_orig <- running_state[instr_index]
+  instr_full <- stringr::str_pad(instr_orig, 5, "left", "0")
+  
+  instr_params <- stringr::str_split(instr_full, "")[[1]]
+  
+  optcode <- instr_params[5]
+  param1  <- instr_params[3]
+  param2  <- instr_params[2]
+  
+  
+  # Execute the program
+  
+  if (optcode %in% c("1", "2", "5", "6", "7", "8")) {
+    
+    input1_index <- switch(
+      param1, 
+      "0" = running_state[instr_index + 1] + 1, 
+      "1" = instr_index + 1
+    )
+    
+    input2_index <- switch(
+      param2,
+      "0" = running_state[instr_index + 2] + 1,
+      "1" = instr_index + 2
+    )
+    
+    input1 <- running_state[input1_index]
+    input2 <- running_state[input2_index]
+    
+    if (optcode %in% c("1", "2")) {
+      
+      output <- switch(optcode, "1" = input1 + input2, "2" = input1 * input2)
+      
+      output_index <- running_state[instr_index + 3] + 1
+      running_state[output_index] <- output
+      
+      instr_index <- instr_index + 4
+      
+    }
+    
+    if (optcode == "5") {
+      instr_index <- ifelse(input1 == 0, instr_index + 3, input2 + 1)
+    }
+    
+    if (optcode == "6") {
+      instr_index <- ifelse(input1 == 0, input2 + 1, instr_index + 3)
+    }
+    
+    if (optcode  == "7") {
+      
+      output <- 1 * (input1 < input2)
+      
+      output_index <- running_state[instr_index + 3] + 1
+      running_state[output_index] <- output
+      
+      instr_index <- instr_index + 4
+      
+    }
+    
+    if (optcode  == "8") {
+      
+      output <- 1 * (input1 == input2)
+      
+      output_index <- running_state[instr_index + 3] + 1
+      running_state[output_index] <- output
+      
+      instr_index <- instr_index + 4
+      
+    }
+    
+  }
+  
+  if (optcode == "3") {
+    
+    output_index <- running_state[instr_index + 1] + 1
+    running_state[output_index] <- input
+    
+    instr_index <- instr_index + 2
+    
+  }
+  
+  if (optcode == "4") {
+    
+    output_index <- running_state[instr_index + 1] + 1
+    
+    message("Received input:", running_state[output_index])
+    
+    instr_index <- instr_index + 2
+    
+  }
+  
+  if (optcode == "9") break
+  
+  
+}
+```
+

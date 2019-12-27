@@ -1,0 +1,182 @@
+# Amplification Circuit
+
+[Instructions](https://adventofcode.com/2019/day/7)
+
+```{r}
+library(gtools)
+
+read_day7 <- function() {
+  raw <- readLines("data-raw/day07.txt")
+  vec <- strsplit(raw, ",")[[1]]
+  as.numeric(vec)
+}
+```
+
+## Part 1
+
+```{r}
+posib <- gtools::permutations(
+  n = 5, r = 5, v = 0:4, 
+  repeats.allowed=FALSE
+  )
+  
+run_intcode <- function(phase_setting, input_signal = 0) {
+  
+  running_state <- read_day7()
+  
+  input <- c(phase_setting, input_signal)
+  instr_index <- 1
+  
+  while (instr_index < length(running_state)) {
+    
+    # Instruction & parameters
+    
+    instr_orig <- running_state[instr_index]
+    instr_full <- stringr::str_pad(instr_orig, 5, "left", "0")
+    
+    instr_params <- stringr::str_split(instr_full, "")[[1]]
+    
+    optcode <- instr_params[5]
+    param1  <- instr_params[3]
+    param2  <- instr_params[2]
+    
+    
+    # Execute the program
+    
+    if (optcode %in% c("1", "2", "5", "6", "7", "8")) {
+      
+      input1_index <- switch(
+        param1, 
+        "0" = running_state[instr_index + 1] + 1, 
+        "1" = instr_index + 1
+      )
+      
+      input2_index <- switch(
+        param2,
+        "0" = running_state[instr_index + 2] + 1,
+        "1" = instr_index + 2
+      )
+      
+      input1 <- running_state[input1_index]
+      input2 <- running_state[input2_index]
+      
+      if (optcode %in% c("1", "2")) {
+        
+        output <- switch(optcode, "1" = input1 + input2, "2" = input1 * input2)
+        
+        output_index <- running_state[instr_index + 3] + 1
+        running_state[output_index] <- output
+        
+        instr_index <- instr_index + 4
+        
+      }
+      
+      if (optcode == "5") {
+        instr_index <- ifelse(input1 == 0, instr_index + 3, input2 + 1)
+      }
+      
+      if (optcode == "6") {
+        instr_index <- ifelse(input1 == 0, input2 + 1, instr_index + 3)
+      }
+      
+      if (optcode  == "7") {
+        
+        output <- 1 * (input1 < input2)
+        
+        output_index <- running_state[instr_index + 3] + 1
+        running_state[output_index] <- output
+        
+        instr_index <- instr_index + 4
+        
+      }
+      
+      if (optcode  == "8") {
+        
+        output <- 1 * (input1 == input2)
+        
+        output_index <- running_state[instr_index + 3] + 1
+        running_state[output_index] <- output
+        
+        instr_index <- instr_index + 4
+        
+      }
+      
+    }
+    
+    if (optcode == "3") {
+      
+      output_index <- running_state[instr_index + 1] + 1
+      running_state[output_index] <- input[1]
+      
+      input <- input[-1]
+      instr_index <- instr_index + 2
+      
+    }
+    
+    if (optcode == "4") {
+      
+      output_index <- running_state[instr_index + 1] + 1
+      
+      # message("Received input:", running_state[output_index])
+      
+      output_signal <- running_state[output_index]
+      
+      instr_index <- instr_index + 2
+      
+    }
+    
+    if (optcode == "9") break
+  
+  }
+  
+  output_signal
+  
+}
+
+thruster_signal <- vector("double", length = nrow(posib))
+
+for (r in 1:nrow(posib)) {
+  
+  signal <- 0
+  for (c in 1:ncol(posib)) {
+    signal <- run_intcode(phase_setting = posib[r, c], input_signal = signal)
+  }
+  
+  thruster_signal[[r]] <- signal
+}
+
+max(thruster_signal)
+```
+
+
+## Part 2
+
+Idea below, but not working and don't have time to figure it out. 
+
+> **Hint:** When I try to run the example `3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
+27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5` with the phase sequence `9,8,7,6,5`, the intcode program fails because it arrives at optcode `3` (the one that asks for the original input) twice, and the second time the `input` vector is empty. Should the original input be recycled for the same phase setting? Or is there something off in my intcode program because optcode `3` should only be encountered once?
+
+```{r, eval=FALSE}
+posib <- gtools::permutations(
+  n = 5, r = 5, v = 5:9, 
+  repeats.allowed=FALSE
+  )
+
+thruster_signal <- vector("double", length = nrow(posib))
+
+for (r in 1:nrow(posib)) {
+  
+  signal <- 0
+  c <- 1
+
+  repeat {
+    signal <- run_intcode(phase_setting = posib[r, c], input_signal = signal)
+    c <- ifelse(c < 5, c + 1, 1) 
+  }
+  
+  thruster_signal[[r]] <- signal
+}
+
+max(thruster_signal)
+```
+
