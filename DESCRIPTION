@@ -12,3 +12,5 @@ Encoding: UTF-8
 LazyData: true
 Imports: 
     whisker
+URL: https://github.com/mpaulacaldas/aoc2019
+BugReports: https://github.com/mpaulacaldas/aoc2019/issues
